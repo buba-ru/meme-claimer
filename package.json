@@ -3,20 +3,28 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "type": "module",
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/buba-ru/meme-claimer.git"
   },
   "keywords": [
-    "meme"
+    "meme",
+    "memeland",
+    "memecoin",
+    "claim"
   ],
   "author": "buba-ru",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/buba-ru/meme-claimer/issues"
   },
-  "homepage": "https://github.com/buba-ru/meme-claimer#readme"
+  "homepage": "https://github.com/buba-ru/meme-claimer#readme",
+  "dependencies": {
+    "axios": "^1.6.5",
+    "https-proxy-agent": "^7.0.2",
+    "random-useragent": "^0.5.0",
+    "web3-eth-accounts": "^4.1.0"
+  }
 }
