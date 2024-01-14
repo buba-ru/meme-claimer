@@ -40,38 +40,57 @@ console.log(`Loaded ${privateKeys.length} private keys`);
                 'content-type': 'application/json',
                 'origin': 'https://www.memecoin.org',
                 'user-agent': ua.getRandom(),
-            }
+            },
+            validateStatus: function (status) {
+                return status < 500;
+            },
         });
     
-        const externalIP = (await client.get('https://api.ipify.org/?format=json')).data.ip;
-        console.log(`ip: ${externalIP}`);
+        try {
+            const externalIP = (await client.get('https://api.ipify.org/?format=json')).data.ip;
+            console.log(`ip: ${externalIP}`);
+        } catch (error) {
+            console.log(error.message);
+        }
     
         // auth 
         const account = web3.privateKeyToAccount(pk);
         const shortAddr = `${account.address.substring(0, 5)}...${account.address.substring(account.address.length - 4)}` //'0xADF...8f3e';
         const signMessage = `The wallet will be used for MEME allocation. If you referred friends, family, lovers or strangers, ensure this wallet has the NFT you referred.\n\nBut also...\n\nNever gonna give you up\nNever gonna let you down\nNever gonna run around and desert you\nNever gonna make you cry\nNever gonna say goodbye\nNever gonna tell a lie and hurt you\n\nWallet: ${shortAddr}`;
         
-        const authResp = await client.post('https://memefarm-api.memecoin.org/user/wallet-auth', {
-            address: account.address,
-            delegate: account.address,
-            message: signMessage,
-            signature: account.sign(signMessage).signature,
-        });
-    
-        if (authResp.data?.error != undefined) {
-            console.log(`[${n}] ${account.address}: ${authResp.data.error}`);
-            result.push(`${account.address};${authResp.data.error}`);
-            await changeIP();
-            continue;
+        let authResp;
+        try {
+            authResp = await client.post('https://memefarm-api.memecoin.org/user/wallet-auth', {
+                address: account.address,
+                delegate: account.address,
+                message: signMessage,
+                signature: account.sign(signMessage).signature,
+            });
+
+            if (authResp.data?.error != undefined) {
+                console.log(`[${n}] ${account.address}: ${authResp.data.error}`);
+                result.push(`${account.address};${authResp.data.error}`);
+                await changeIP();
+                continue;
+            }
+            
+            client.defaults.headers.Authorization = `Bearer ${authResp.data.accessToken}`;
+            delete  client.defaults.headers['content-type'];
+        } catch (error) {
+            console.log(error.message);
         }
     
-        // request points
-        client.defaults.headers.Authorization = `Bearer ${authResp.data.accessToken}`;
-        delete  client.defaults.headers['content-type'];
+        // request points        
+        let pointsResp;
+        try {
+            pointsResp = await client.get('https://memefarm-api.memecoin.org/user/tasks');
+            console.log(`[${n}] ${account.address}: ${pointsResp.data.points.current}; ref_points: ${pointsResp.data.points.referral}`);
+            result.push(`${account.address};${pointsResp.data.points.current};${pointsResp.data.points.referral}`);
+        } catch (error) {
+            console.log(error.message);
+        }
+
         
-        const pointsResp = await client.get('https://memefarm-api.memecoin.org/user/tasks');
-        console.log(`[${n}] ${account.address}: ${pointsResp.data.points.current}; ref_points: ${pointsResp.data.points.referral}`);
-        result.push(`${account.address};${pointsResp.data.points.current};${pointsResp.data.points.referral}`);
 
         await changeIP();
         n++;
